@@ -13,6 +13,7 @@
 #include <sstream>
 #include <time.h>
 #include <SDL2/SDL_mixer.h>
+#include <fstream>
 ////////////////////////////////////////
 const int SCREEN_WIDTH = 550;
 const int SCREEN_HEIGHT = 700;
@@ -44,6 +45,45 @@ bool gun = false;
 bool shahab = false;
 bool shahab2 = false;
 bool ISlaunched = true;
+bool cshahab = false;
+bool cshahab2 = false;
+bool iscollided = false;
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+long long int file(int point)
+{
+    long long int BestPoint;
+    fstream PointFile;
+
+    PointFile.open("Data.txt");
+    PointFile >> BestPoint;
+    PointFile.close();
+
+    FILE *fp = fopen("Data.txt", "w");
+    fclose(fp);
+
+    PointFile.open("Data.txt");
+    if (BestPoint < point)
+        BestPoint = point;
+    PointFile << BestPoint;
+
+    return BestPoint;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void heigh(int score)
+{
+    SDL_Color textColor = {255, 255, 255, 255};
+    std::stringstream timetext3;
+    SDL_Rect hs_rect;
+    hs_rect.x = 189;
+    hs_rect.y = 150;
+    hs_rect.h = 70;
+    hs_rect.w = 200;
+    timetext3.str("");
+    timetext3 << "high score : " << file(score);
+    SDL_Surface *surface33 = TTF_RenderText_Blended(gFont, timetext3.str().c_str(), textColor);
+    SDL_Texture *gTexture33 = SDL_CreateTextureFromSurface(gRenderer, surface33);
+    SDL_RenderCopyEx(gRenderer, gTexture33, NULL, &hs_rect, 0.0, NULL, SDL_FLIP_NONE);
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void init()
 {
@@ -93,19 +133,22 @@ int main()
     srand(time(NULL));
     Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
     gSound = Mix_LoadMUS("147.mp3");
-    Mix_PlayMusic( gSound, -1 );
+    Mix_PlayMusic(gSound, -1);
     bool start = false;
     bool flag;
     bool tir = false;
     bool s = true;
     bool separ = false;
     int separcount = 0;
+    float timer = 3;
+    float timershahab = 3;
+    float timershahab2 = 3;
     TTF_Init();
     init();
     gFont = TTF_OpenFont("game.ttf", 100);
     SDL_Texture *gTexture;
     gShahab = SDL_LoadBMP("shahab.bmp");
-    gSepar = SDL_LoadBMP("separ.bmp");
+    gSepar = SDL_LoadBMP("shield.bmp");
     SDL_Texture *gTexture7 = SDL_CreateTextureFromSurface(gRenderer, gRocket);
     gCoin = SDL_LoadBMP("coin.bmp");
     gGun = SDL_LoadBMP("gun.bmp");
@@ -296,15 +339,16 @@ int main()
                 gGameover = SDL_LoadBMP("Gameover.bmp");
                 gTexture10 = SDL_CreateTextureFromSurface(gRenderer, gGameover);
                 SDL_RenderCopy(gRenderer, gTexture10, NULL, &gameoverRect);
+                heigh(score);
                 SDL_RenderPresent(gRenderer);
-                SDL_Delay(2000);
+                SDL_Delay(5000);
             }
 
             if (tir && gun == true)
             {
                 ISlaunched = false;
                 c.v -= 5;
-                c.y += c.v;
+                // c.y += c.v;
                 if (c.y + c.v - 4 <= 2)
                 {
 
@@ -321,13 +365,13 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if (turn == false)
         {
-            x = rand() % 1075;
+            x = rand() % 1150;
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        cout << x << endl;
+        // cout << x << endl;
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        if (x >= 1000 && x < 1075) //separ
+        if (x >= 1000 && x < 1150) //separ
         {
             turn = true;
             gTexture7 = SDL_CreateTextureFromSurface(gRenderer, gSepar);
@@ -341,13 +385,21 @@ int main()
                 separRect.x = rand() % 120 + 220;
                 separRect.y = -100;
             }
-            if (SDL_HasIntersection(&rocketRect, &separRect))
+            if (SDL_HasIntersection(&rocketRect, &separRect) && !iscollided)
             {
+                iscollided = true;
                 separ = true;
                 separRect.h = 0;
                 separRect.w = 0;
-                separcount += 3;
+                separcount += 1;
                 // cout<<separcount<<endl;
+            }
+            if (iscollided)
+                timer -= 0.1;
+            if (timer < 0)
+            {
+                iscollided = false;
+                timer = 3;
             }
         }
 
@@ -366,28 +418,39 @@ int main()
                 shahab2Rect.x = rand() % 120 + 220;
                 shahab2Rect.y = -100;
             }
-            if (SDL_HasIntersection(&rocketRect, &shahab2Rect))
+            if (SDL_HasIntersection(&rocketRect, &shahab2Rect) && !cshahab2)
             {
+                cshahab2 = true;
                 if (!separ)
                 {
-                    cout<<separcount<<endl;
+                    // cout<<separcount<<endl;
                     quit = true;
                     SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
                     SDL_RenderClear(gRenderer);
                     gGameover = SDL_LoadBMP("Gameover.bmp");
                     gTexture10 = SDL_CreateTextureFromSurface(gRenderer, gGameover);
                     SDL_RenderCopy(gRenderer, gTexture10, NULL, &gameoverRect);
+                    heigh(score);
                     SDL_RenderPresent(gRenderer);
-                    SDL_Delay(2000);
+                    SDL_Delay(5000);
                 }
                 else if (separ)
                 {
+                    //cout<<separcount<<endl;
                     separcount--;
                     if (separcount == 0)
                     {
                         separ = false;
                     }
+                    // cout<<separcount<<endl;
                 }
+            }
+            if (cshahab2)
+                timershahab2 -= 0.1;
+            if (timershahab2 < 0)
+            {
+                cshahab2 = false;
+                timershahab2 = 3;
             }
             if (c.y + c.v - 4 < shahab2Rect.y && c.x + 4 >= shahab2Rect.x && c.x + 4 <= shahab2Rect.x + shahab2Rect.w)
             {
@@ -416,30 +479,44 @@ int main()
                 shahabRect.x = rand() % 120 + 220;
                 shahabRect.y = -100;
             }
-            if (SDL_HasIntersection(&rocketRect, &shahabRect))
+            if (SDL_HasIntersection(&rocketRect, &shahabRect) && !cshahab)
             {
+                cshahab = true;
+
                 if (!separ)
                 {
+                    cout << separcount << endl;
                     quit = true;
                     SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
                     SDL_RenderClear(gRenderer);
                     gGameover = SDL_LoadBMP("Gameover.bmp");
                     gTexture10 = SDL_CreateTextureFromSurface(gRenderer, gGameover);
                     SDL_RenderCopy(gRenderer, gTexture10, NULL, &gameoverRect);
-                    // cout << 20000000 << endl;
+                    // cout << 50000000 << endl;
+                    heigh(score);
                     SDL_RenderPresent(gRenderer);
-                    SDL_Delay(2000);
+                    SDL_Delay(5000);
                 }
                 else if (separ)
                 {
+                    // cout<<separcount<<endl;
                     separcount--;
-                    // cout << 100000000 << endl;
                     if (separcount == 0)
                     {
                         separ = false;
                     }
+
+                    //  cout<<separcount<<endl;z
                 }
             }
+            if (cshahab)
+                timershahab -= 0.1;
+            if (timershahab < 0)
+            {
+                cshahab = false;
+                timershahab = 3;
+            }
+
             if (c.y + c.v - 4 < shahabRect.y && c.x + 4 >= shahabRect.x && c.x + 4 <= shahabRect.x + shahabRect.w)
             {
 
@@ -498,6 +575,7 @@ int main()
         }
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ScoreRender(gRenderer, score, gFont);
+
         SDL_RenderPresent(gRenderer);
         framestart = SDL_GetTicks();
         frametime = SDL_GetTicks() - framestart;
