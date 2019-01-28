@@ -1,5 +1,5 @@
 #pragma once
-#include "barriers.h"
+#include "tir.h"
 #include <stdlib.h>
 #include <iostream>
 #include <math.h>
@@ -7,192 +7,504 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <string>
+#include <cstring>
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <cstdlib>
+#include <sstream>
 #include <time.h>
-
+#include <SDL2/SDL_mixer.h>
+////////////////////////////////////////
 const int SCREEN_WIDTH = 550;
 const int SCREEN_HEIGHT = 700;
+////////////////////////////////////////
 SDL_Window *gWindow = NULL;
 SDL_Renderer *gRenderer = NULL;
 SDL_Surface *gRocket = NULL;
 SDL_Surface *gDivar = NULL;
 SDL_Surface *gDivar2 = NULL;
-SDL_Surface *gShahab = SDL_LoadBMP("shahab.bmp");
-SDL_Texture *gTexture4 = SDL_CreateTextureFromSurface(gRenderer, gShahab);
-SDL_Surface *gCoin = SDL_LoadBMP("coin.bmp");
-SDL_Texture *gTexture5 = SDL_CreateTextureFromSurface(gRenderer, gCoin);
-SDL_Surface *gGun = SDL_LoadBMP("gun.bmp");
-SDL_Texture *gTexture6 = SDL_CreateTextureFromSurface(gRenderer, gGun);
-SDL_Surface *gScreenSurface = NULL;
-
+SDL_Surface *gShahab = NULL;
+SDL_Surface *gShahab2 = NULL;
+SDL_Surface *gCoin = NULL;
+SDL_Surface *gScreensurface = NULL;
+SDL_Surface *gGun = NULL;
+SDL_Surface *gSepar = NULL;
+SDL_Surface *gGameover = NULL;
+SDL_Texture *gTexture10;
+TTF_Font *gFont = TTF_OpenFont("game.ttf", 54);
+Mix_Music *gSound = NULL;
+//float xtir = 277.5;
+//float ytir = 450;
+//float xendtir = xtir;
+//float yendtir = ytir;
+int coin = 0;
+int coincounter = 0;
+int score = 0;
+bool quit = false;
+bool gun = false;
+bool shahab = false;
+bool shahab2 = false;
+bool ISlaunched = true;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void init()
 {
     gWindow = SDL_CreateWindow("MS", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    for (int i = 0; i < 10; i++)
-    {
-        for (int j = 3; j < 7; j++)
-        {
-            abarrier[i][j].x = 55 * j ;
-            abarrier[i][j].y = 70 * i ;
-        }
-    }
 }
-
-void Random()
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void ScoreRender(SDL_Renderer *gRenderer, int score, TTF_Font *gFont)
 {
-    //shahabsang=1;
-    //coin=2;
-    //gun=3
-    int b[10] = {};
-    int q = rand() % 4 + 3;
-    b[q] = rand() % 3 + 1;
+    SDL_Color textColor = {255, 255, 255, 255};
+    std::stringstream timetext;
+    SDL_Rect score_rect;
+    score_rect.x = 150;
+    score_rect.y = 640;
+    score_rect.h = 60;
+    score_rect.w = 100;
+    std::stringstream timetext2;
+    SDL_Rect coin_rect;
+    coin_rect.x = 290;
+    coin_rect.y = 640;
+    coin_rect.h = 60;
+    coin_rect.w = 100;
 
-    for (int j = 3; j < 7; j++)
-    {
-        abarrier[0][j].value = b[j];
-    }
+    timetext.str("");
+    timetext << "score : " << score;
+    timetext2.str("");
+    timetext2 << "coin : " << coincounter;
+    SDL_Surface *surface = TTF_RenderText_Blended(gFont, timetext.str().c_str(), textColor);
+    SDL_Texture *gTexture = SDL_CreateTextureFromSurface(gRenderer, surface);
+    SDL_Surface *surface2 = TTF_RenderText_Blended(gFont, timetext2.str().c_str(), textColor);
+    SDL_Texture *gTextureCoin = SDL_CreateTextureFromSurface(gRenderer, surface2);
+    SDL_Texture *gTexture10 = SDL_CreateTextureFromSurface(gRenderer, gGameover);
+    SDL_RenderCopyEx(gRenderer, gTexture, NULL, &score_rect, 0.0, NULL, SDL_FLIP_NONE);
+    SDL_RenderCopyEx(gRenderer, gTextureCoin, NULL, &coin_rect, 0.0, NULL, SDL_FLIP_NONE);
+    SDL_FreeSurface(surface);
+    SDL_FreeSurface(surface2);
+    SDL_DestroyTexture(gTexture);
+    SDL_DestroyTexture(gTextureCoin);
 }
-
-void shift(barriers abarrier[10][10])
-{
-    for (int i = 9; i >= 0; i--)
-    {
-        for (int j = 3; j < 7; j++)
-        {
-            abarrier[i + 1][j].value = abarrier[i][j].value;
-        }
-    }
-    Random();
-}
-
-void showbarrier(barriers abarrier[10][10])
-{
-    SDL_Rect shahabRect;
-    shahabRect.x;
-    shahabRect.y;
-    shahabRect.w = 55;
-    shahabRect.h = 70;
-
-    SDL_Rect gunRect;
-    gunRect.x;
-    gunRect.y;
-    gunRect.w = 55;
-    gunRect.h = 70;
-
-    SDL_Rect coinRect;
-    coinRect.x;
-    coinRect.y;
-    coinRect.w = 55;
-    coinRect.h = 70;
-
-    for (int i = 0; i < 10; i++)
-    {
-        for (int j = 3; j < 7; j++)
-        {
-            if (abarrier[i][j].value == 1)
-            {
-
-                SDL_RenderCopy(gRenderer, gTexture4, NULL, &shahabRect);
-            }
-            else if (abarrier[i][j].value == 2)
-            {
-
-                SDL_RenderCopy(gRenderer, gTexture5, NULL, &coinRect);
-            }
-            else if (abarrier[i][j].value == 3)
-            {
-
-                SDL_RenderCopy(gRenderer, gTexture6, NULL, &gunRect);
-            }
-        }
-    }
-}
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main()
 {
+    const int fps = 90;
+    const int framedelay = 1000 / fps;
+    Uint32 framestart;
+    int frametime;
     srand(time(NULL));
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
+    gSound = Mix_LoadMUS("147.mp3");
+    Mix_PlayMusic( gSound, -1 );
     bool start = false;
-    bool quit = false;
     bool flag;
+    bool tir = false;
+    bool s = true;
+    bool separ = false;
+    int separcount = 0;
+    TTF_Init();
     init();
+    gFont = TTF_OpenFont("game.ttf", 100);
+    SDL_Texture *gTexture;
+    gShahab = SDL_LoadBMP("shahab.bmp");
+    gSepar = SDL_LoadBMP("separ.bmp");
+    SDL_Texture *gTexture7 = SDL_CreateTextureFromSurface(gRenderer, gRocket);
+    gCoin = SDL_LoadBMP("coin.bmp");
+    gGun = SDL_LoadBMP("gun.bmp");
     gRocket = SDL_LoadBMP("rocket.bmp");
-    SDL_Texture *gTexture = SDL_CreateTextureFromSurface(gRenderer, gRocket);
+    SDL_Texture *gTexture0 = SDL_CreateTextureFromSurface(gRenderer, gRocket);
     gDivar = SDL_LoadBMP("left.bmp");
     SDL_Texture *gTexture2 = SDL_CreateTextureFromSurface(gRenderer, gDivar);
     gDivar2 = SDL_LoadBMP("right.bmp");
     SDL_Texture *gTexture3 = SDL_CreateTextureFromSurface(gRenderer, gDivar2);
-
+    //////////////////////////////////////////////
     SDL_Rect rocketRect;
     rocketRect.x = 240;
-    float x = rocketRect.x;
+    float x2 = rocketRect.x;
     rocketRect.y = 450;
     rocketRect.w = 75;
     rocketRect.h = 75;
-
+    c.x = 240 + 75 / 2;
+    c.y = 450;
+    //////////////////////////////////////////////
     SDL_Rect divarRect;
     divarRect.x = 0;
     divarRect.y = 0;
     divarRect.w = 550;
-    divarRect.h = 750;
-
+    divarRect.h = 700;
+    //////////////////////////////////////////////
+    SDL_Rect gameoverRect;
+    gameoverRect.x = 0;
+    gameoverRect.y = 0;
+    gameoverRect.w = 550;
+    gameoverRect.h = 700;
+    //////////////////////////////////////////////
     SDL_Rect divar2Rect;
     divar2Rect.x = 0;
     divar2Rect.y = 0;
-    divar2Rect.w = 570;
-    divar2Rect.h = 750;
-
+    divar2Rect.w = 550;
+    divar2Rect.h = 700;
+    //////////////////////////////////////////////
+    SDL_Rect tirRect;
+    tirRect.x = c.x;
+    tirRect.y = c.y;
+    tirRect.w = 8;
+    tirRect.h = 8;
+    //////////////////////////////////////////////
+    SDL_Rect shahabRect;
+    shahabRect.x = rand() % 80 + 200;
+    shahabRect.y = 0;
+    shahabRect.w = 55;
+    shahabRect.h = 70;
+    /////////////////////////////////////////////
+    SDL_Rect shahab2Rect;
+    shahab2Rect.x = rand() % 80 + 200;
+    shahab2Rect.y = 0;
+    shahab2Rect.w = 40;
+    shahab2Rect.h = 50;
+    /////////////////////////////////////////////
+    SDL_Rect coinRect;
+    coinRect.x = rand() % 80 + 200;
+    coinRect.y = 0;
+    coinRect.w = 50;
+    coinRect.h = 40;
+    /////////////////////////////////////////////
+    SDL_Rect separRect;
+    separRect.x = rand() % 80 + 200;
+    separRect.y = 0;
+    separRect.w = 50;
+    separRect.h = 40;
+    /////////////////////////////////////////////
+    SDL_Rect gunRect;
+    gunRect.x = rand() % 80 + 200;
+    gunRect.y = 0;
+    gunRect.w = 50;
+    gunRect.h = 40;
+    ////////////////////////////////////////////////
     SDL_Event e;
+    bool turn = false;
+    int x;
     while (!quit)
     {
-
         SDL_SetRenderDrawColor(gRenderer, 0, 0, 128, 255);
         SDL_RenderClear(gRenderer);
-        SDL_RenderCopy(gRenderer, gTexture, NULL, &rocketRect);
+        // SDL_Rect gRect = {0, 625, 550, 75};
+        // SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
+        // SDL_RenderFillRect(gRenderer, &gRect);
+        SDL_RenderCopy(gRenderer, gTexture0, NULL, &rocketRect);
         SDL_RenderCopy(gRenderer, gTexture2, NULL, &divarRect);
         SDL_RenderCopy(gRenderer, gTexture3, NULL, &divar2Rect);
-
-        shift(abarrier);
-        showbarrier(abarrier);
-        while (SDL_PollEvent(&e) != 0)
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (coinRect.y >= 710)
+        {
+            coinRect.w = 50;
+            coinRect.h = 40;
+        }
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (separRect.y >= 710)
+        {
+            separRect.w = 50;
+            separRect.h = 40;
+        }
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (gunRect.y >= 710)
+        {
+            gunRect.w = 50;
+            gunRect.h = 40;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (shahab2)
+        {
+            shahab2Rect.w = 40;
+            shahab2Rect.h = 50;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (shahab)
+        {
+            shahabRect.w = 55;
+            shahabRect.h = 70;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (tir)
+        {
+            if (c.lahze_shelik)
+            {
+                c.x = rocketRect.x + 75 / 2;
+                c.y = rocketRect.y;
+                c.lahze_shelik = false;
+            }
+            filledCircleRGBA(gRenderer, c.x, c.y + c.v, 4, 255, 255, 255, 255);
+        }
+        if (!tir)
+        {
+            filledCircleRGBA(gRenderer, rocketRect.x + 75 / 2, rocketRect.y, 4, 255, 255, 255, 255);
+        }
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        SDL_PollEvent(&e);
         {
 
             if (e.type == SDL_QUIT)
             {
                 quit = true;
             }
+            if (e.type == SDL_KEYDOWN)
+            {
+                switch (e.key.keysym.sym)
+                {
+                case SDLK_LEFT:
+                {
+                    flag = true;
+                    start = true;
+                }
+                break;
+                case SDLK_RIGHT:
+                {
+                    flag = false;
+                    start = true;
+                }
+                break;
+                case SDLK_z:
+                {
+                    tir = true;
+                    c.lahze_shelik = true;
+                    s = false;
+                }
+                break;
+                }
+            }
+            if (flag == false && start == true)
+            {
+                x2 += 4;
+                rocketRect.x = x2;
+                if (ISlaunched)
+                {
+                    c.x = rocketRect.x;
+                    c.y = rocketRect.y;
+                }
+            }
+            else if (flag == true && start == true)
+            {
+                x2 -= 4;
+                rocketRect.x = x2;
+                if (ISlaunched)
+                {
+                    c.x = rocketRect.x;
+                    c.y = rocketRect.y;
+                }
+            }
+            if (rocketRect.x <= 15 || rocketRect.x >= 437)
+            {
+                quit = true;
+                gGameover = SDL_LoadBMP("Gameover.bmp");
+                gTexture10 = SDL_CreateTextureFromSurface(gRenderer, gGameover);
+                SDL_RenderCopy(gRenderer, gTexture10, NULL, &gameoverRect);
+                SDL_RenderPresent(gRenderer);
+                SDL_Delay(2000);
+            }
+
+            if (tir && gun == true)
+            {
+                ISlaunched = false;
+                c.v -= 5;
+                c.y += c.v;
+                if (c.y + c.v - 4 <= 2)
+                {
+
+                    tir = false;
+                    ISlaunched = true;
+                    c.x = rocketRect.x + 75 / 2;
+                    c.y = rocketRect.x;
+                    c.v = 0;
+                }
+            }
+        }
+        tirRect.x = c.x;
+        tirRect.y = c.y;
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (turn == false)
+        {
+            x = rand() % 1075;
+        }
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        cout << x << endl;
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        if (x >= 1000 && x < 1075) //separ
+        {
+            turn = true;
+            gTexture7 = SDL_CreateTextureFromSurface(gRenderer, gSepar);
+            SDL_RenderCopy(gRenderer, gTexture7, NULL, &separRect);
+            separRect.y += 5;
+
+            if (separRect.y + 50 >= 800)
+            {
+                turn = false;
+                score++;
+                separRect.x = rand() % 120 + 220;
+                separRect.y = -100;
+            }
+            if (SDL_HasIntersection(&rocketRect, &separRect))
+            {
+                separ = true;
+                separRect.h = 0;
+                separRect.w = 0;
+                separcount += 3;
+                // cout<<separcount<<endl;
+            }
         }
 
-        if (e.type == SDL_KEYDOWN)
+        if (x > 150 && x <= 450) //shahab koochik
         {
-            switch (e.key.keysym.sym)
+            turn = true;
+            gTexture = SDL_CreateTextureFromSurface(gRenderer, gShahab);
+            SDL_RenderCopy(gRenderer, gTexture, NULL, &shahab2Rect);
+            shahab2Rect.y += 7;
+
+            if (shahab2Rect.y + 50 >= 800)
             {
-            case SDLK_LEFT:
-            {
-                flag = true;
-                start = true;
+                shahab2 = true;
+                turn = false;
+                score++;
+                shahab2Rect.x = rand() % 120 + 220;
+                shahab2Rect.y = -100;
             }
-            break;
-            case SDLK_RIGHT:
+            if (SDL_HasIntersection(&rocketRect, &shahab2Rect))
             {
-                flag = false;
-                start = true;
+                if (!separ)
+                {
+                    cout<<separcount<<endl;
+                    quit = true;
+                    SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+                    SDL_RenderClear(gRenderer);
+                    gGameover = SDL_LoadBMP("Gameover.bmp");
+                    gTexture10 = SDL_CreateTextureFromSurface(gRenderer, gGameover);
+                    SDL_RenderCopy(gRenderer, gTexture10, NULL, &gameoverRect);
+                    SDL_RenderPresent(gRenderer);
+                    SDL_Delay(2000);
+                }
+                else if (separ)
+                {
+                    separcount--;
+                    if (separcount == 0)
+                    {
+                        separ = false;
+                    }
+                }
             }
-            break;
+            if (c.y + c.v - 4 < shahab2Rect.y && c.x + 4 >= shahab2Rect.x && c.x + 4 <= shahab2Rect.x + shahab2Rect.w)
+            {
+
+                shahab2Rect.w = 0;
+                shahab2Rect.h = 0;
+                if (shahab2Rect.y >= 710)
+                {
+                    shahab2 = true;
+                }
             }
         }
-        if (flag == false && start == true)
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (x > 450 && x <= 900) //shahab bozorg
         {
-            x += 0.05;
-            rocketRect.x = x;
+            turn = true;
+            gTexture = SDL_CreateTextureFromSurface(gRenderer, gShahab);
+            SDL_RenderCopy(gRenderer, gTexture, NULL, &shahabRect);
+            shahabRect.y += 5;
+
+            if (shahabRect.y + 75 >= 800)
+            {
+                shahab = true;
+                score++;
+                turn = false;
+                shahabRect.x = rand() % 120 + 220;
+                shahabRect.y = -100;
+            }
+            if (SDL_HasIntersection(&rocketRect, &shahabRect))
+            {
+                if (!separ)
+                {
+                    quit = true;
+                    SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+                    SDL_RenderClear(gRenderer);
+                    gGameover = SDL_LoadBMP("Gameover.bmp");
+                    gTexture10 = SDL_CreateTextureFromSurface(gRenderer, gGameover);
+                    SDL_RenderCopy(gRenderer, gTexture10, NULL, &gameoverRect);
+                    // cout << 20000000 << endl;
+                    SDL_RenderPresent(gRenderer);
+                    SDL_Delay(2000);
+                }
+                else if (separ)
+                {
+                    separcount--;
+                    // cout << 100000000 << endl;
+                    if (separcount == 0)
+                    {
+                        separ = false;
+                    }
+                }
+            }
+            if (c.y + c.v - 4 < shahabRect.y && c.x + 4 >= shahabRect.x && c.x + 4 <= shahabRect.x + shahabRect.w)
+            {
+
+                shahabRect.w = 0;
+                shahabRect.h = 0;
+                if (shahabRect.y >= 710)
+                {
+                    shahab = true;
+                }
+            }
         }
-        else if (flag == true && start == true)
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (x < 1000 && x > 900) //gun
         {
-            x -= 0.05;
-            rocketRect.x = x;
+            turn = true;
+
+            gTexture = SDL_CreateTextureFromSurface(gRenderer, gGun);
+            SDL_RenderCopy(gRenderer, gTexture, NULL, &gunRect);
+            gunRect.y += 5;
+
+            if (gunRect.y + 40 >= 800)
+            {
+                turn = false;
+                score++;
+                gunRect.x = rand() % 120 + 220;
+                gunRect.y = -100;
+            }
+            if (SDL_HasIntersection(&rocketRect, &gunRect))
+            {
+                gun = true;
+                gunRect.h = 0;
+                gunRect.w = 0;
+            }
         }
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (x <= 150 && x >= 0) //coin
+        {
+            turn = true;
+            gTexture = SDL_CreateTextureFromSurface(gRenderer, gCoin);
+            SDL_RenderCopy(gRenderer, gTexture, NULL, &coinRect);
+            coinRect.y += 5;
+
+            if (coinRect.y + 40 >= 800)
+            {
+                turn = false;
+                score++;
+                coinRect.x = rand() % 120 + 220;
+                coinRect.y = -100;
+            }
+            if (SDL_HasIntersection(&rocketRect, &coinRect))
+            {
+                coincounter++;
+                coinRect.h = 0;
+                coinRect.w = 0;
+            }
+        }
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ScoreRender(gRenderer, score, gFont);
         SDL_RenderPresent(gRenderer);
+        framestart = SDL_GetTicks();
+        frametime = SDL_GetTicks() - framestart;
+        if (framedelay > frametime)
+        {
+            SDL_Delay(framedelay - frametime);
+        }
     }
 
     return 0;
