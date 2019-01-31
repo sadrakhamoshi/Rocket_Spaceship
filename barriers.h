@@ -7,4 +7,4 @@ class barriers
     int barwidht = 70;
         
     }abarriers[10][10];
-s
+s sasdsdsdsadsad;
